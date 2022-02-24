@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Finals Feelings</title>
+        <script src="https://cdn.jsdelivr.net/npm/gun/examples/jquery.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+            }
+            body {
+                display: flex;
+                flex-direction: column;
+                font-family: cursive;
+                margin: 16px;
+            }
+            #chatbox {
+                width: 100%;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            #chatbox li {
+                order: 1;
+            }
+            #chatbox li.new-comment {
+                order: 999;
+            }
+            li ul {
+                width: 100%;
+                height: 100%;
+            }
+
+            .new-comment {
+                opacity: 0;
+            }
+            .new-comment:hover {
+                opacity: 1;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Finals Feelings</h1>
+        <h4>An anonymous communication platform</h4>
+        <ul id="chatbox">
+            
+        </ul>
+        <script>
+            var gun = Gun(['http://localhost:8765/gun', 'https://gun-manhattan.herokuapp.com/gun']);
+            const items = gun.get('data6');
+
+            function addInput(el) {
+                const li = document.createElement('li');
+                li.className = 'new-comment';
+                const input = document.createElement('input');
+                input.placeholder = 'reply...';
+                const btn = document.createElement('button');
+                btn.textContent = 'Submit';
+                const handleSubmit = () => {
+                    var a = el;
+                    let parentIds = [];
+                    while (a) {
+                        if (a.tagName === 'LI')
+                            parentIds.push(a.id);
+                        a = a.parentNode;
+                    }
+                    parentIds = parentIds.reverse();
+                    console.log(parentIds);
+                    let parentItem = items;
+                    for (const parentId of parentIds) {
+                        parentItem = parentItem.get('replies').get(parentId);
+                    }
+                    parentItem.get('replies').set({text: el.querySelector('.new-comment input').value});
+                    el.querySelector('.new-comment input').value = '';
+                };
+                btn.onclick = handleSubmit;
+                input.onkeypress = (ev) => {if (ev.keyCode === 13) handleSubmit()};
+                li.appendChild(input);
+                li.appendChild(btn);
+                el.appendChild(li);
+            }
+            function removeInput() {
+                const inp = this.querySelector('.new-comment');
+                inp.parentNode.removeChild(inp);
+            }
+            
+            addInput(document.querySelector('#chatbox'));
+
+            function makeLi(item, id, parentEl) {
+                if (item === null) return;
+                const existingLi = document.querySelector('#' + id);
+                if (!existingLi) {
+                    const replies = document.createElement('ul');
+                    addInput(replies);
+
+                    const li = document.createElement('li');
+                    li.id = id;
+                    console.log(item.text);
+                    const url_regex = /(!(?:http|ftp|https):\/\/(?:[\w_-]+(?:(?:\.[\w_-]+)+))(?:[\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-]))/;
+                    // const matches = item.text.match(url_regex);
+                    const textBits = item.text.split(url_regex);
+                    console.log(textBits);
+                    const childNodes = [];
+                    for (let i = 0; i < textBits.length; i++) {
+                        if (i %2 == 0) {
+                            const textNode = document.createTextNode(textBits[i]);
+                            li.appendChild(textNode);
+                        }
+                        else {
+                            const imageNode = document.createElement('img');
+                            imageNode.src = textBits[i].slice(1);
+                            li.appendChild(imageNode);
+                        }
+                    }
+                    
+                    li.appendChild(replies);
+                    parentEl.appendChild(li);
+
+                    gun.get(id).get('replies').map().on((a, b) => makeLi(a, b, replies));
+                }
+            }
+
+            items.get('replies').map().on((item, id) => makeLi(item, id, document.querySelector('#chatbox')));
+        </script>
+    </body>
+</html>
