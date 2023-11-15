@@ -16,7 +16,6 @@
                 margin: 16px;
             }
             #chatbox {
-                width: 100%;
                 flex-grow: 1;
                 display: flex;
                 flex-direction: column;
@@ -28,26 +27,28 @@
                 order: 999;
             }
             li ul {
-                width: 100%;
                 height: 100%;
             }
-
             .new-comment {
                 opacity: 0;
             }
             .new-comment:hover {
                 opacity: 1;
             }
+            li.new-comment:focus-within {
+                opacity: 1 !important;
+            }​
         </style>
     </head>
     <body>
         <h1>Finals Feelings</h1>
         <h4>An anonymous communication platform</h4>
+        <p>Type an exclamation mark before a URL to share an image. EX: !http://whatever.com/happiness.gif</p>
         <ul id="chatbox">
             
         </ul>
         <script>
-            var gun = Gun(['http://localhost:8765/gun', 'https://gun-manhattan.herokuapp.com/gun']);
+            var gun = Gun(['https://finals-feelings.herokuapp.com/gun', 'https://gun-manhattan.herokuapp.com/gun']);
             const items = gun.get('data6');
 
             function addInput(el) {
@@ -66,7 +67,6 @@
                         a = a.parentNode;
                     }
                     parentIds = parentIds.reverse();
-                    console.log(parentIds);
                     let parentItem = items;
                     for (const parentId of parentIds) {
                         parentItem = parentItem.get('replies').get(parentId);
@@ -92,15 +92,15 @@
                 const existingLi = document.querySelector('#' + id);
                 if (!existingLi) {
                     const replies = document.createElement('ul');
+                    replies.style.display = 'flex';
+                    replies.style.flexDirection = 'column';
                     addInput(replies);
 
                     const li = document.createElement('li');
                     li.id = id;
-                    console.log(item.text);
                     const url_regex = /(!(?:http|ftp|https):\/\/(?:[\w_-]+(?:(?:\.[\w_-]+)+))(?:[\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-]))/;
                     // const matches = item.text.match(url_regex);
                     const textBits = item.text.split(url_regex);
-                    console.log(textBits);
                     const childNodes = [];
                     for (let i = 0; i < textBits.length; i++) {
                         if (i %2 == 0) {
